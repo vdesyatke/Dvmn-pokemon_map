@@ -5,6 +5,14 @@ from django.urls import path
 
 from pokemon_entities import views
 
+# from django.conf import settings
+# from django.conf.urls.static import static
+#
+# urlpatterns = [
+#     # Ваши другие URL-шаблоны здесь
+# ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.show_all_pokemons, name='mainpage'),
