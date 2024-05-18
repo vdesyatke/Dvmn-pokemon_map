@@ -22,3 +22,6 @@ class PokemonEntity(models.Model):
     strength = models.IntegerField(verbose_name='Strength', blank=False)
     defence = models.IntegerField(verbose_name='Defence', blank=False)
     stamina = models.IntegerField(verbose_name='Stamina', blank=False)
+
+    def __str__(self):
+        return self.pokemon.title + ' ' + str(self.level)
