@@ -1,9 +1,10 @@
 import folium
-import json
 
 from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from .models import Pokemon, PokemonEntity
+from django.utils.timezone import localtime
+
 
 MOSCOW_CENTER = [55.751244, 37.618423]
 DEFAULT_IMAGE_URL = (
@@ -32,12 +33,20 @@ def show_all_pokemons(request):
 
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     for pokemon in pokemons:
-        for pokemon_entity in PokemonEntity.objects.filter(pokemon=pokemon):
+        if pokemon.image:
+            image_url = request.build_absolute_uri(pokemon.image.url)
+        else:
+            image_url = ''
+        for pokemon_entity in PokemonEntity.objects.filter(
+                pokemon=pokemon,
+                appeared_at__lt=localtime(),
+                disappeared_at__gt=localtime(),
+        ):
             add_pokemon(
                 folium_map,
                 pokemon_entity.latitude,
                 pokemon_entity.longitude,
-                request.build_absolute_uri(pokemon.image.url) if pokemon.image else '',
+                image_url,
             )
 
     pokemons_on_page = []
@@ -65,12 +74,20 @@ def show_pokemon(request, pokemon_id):
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
 
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
-    for pokemon_entity in PokemonEntity.objects.filter(pokemon=requested_pokemon): #requested_pokemon['entities']:
+    for pokemon_entity in PokemonEntity.objects.filter(
+            pokemon=requested_pokemon,
+            appeared_at__lt=localtime(),
+            disappeared_at__gt=localtime(),
+    ):
+        if requested_pokemon.image:
+            image_url = request.build_absolute_uri(requested_pokemon.image.url)
+        else:
+            image_url = ''
         add_pokemon(
             folium_map,
             pokemon_entity.latitude,
             pokemon_entity.longitude,
-            requested_pokemon.image.url,
+            image_url,
         )
 
     return render(request, 'pokemon.html', context={
