@@ -4,6 +4,7 @@ from django.http import HttpResponseNotFound
 from django.shortcuts import render
 from .models import Pokemon, PokemonEntity
 from django.utils.timezone import localtime
+from django.core.exceptions import ObjectDoesNotExist
 
 
 MOSCOW_CENTER = [55.751244, 37.618423]
@@ -64,14 +65,40 @@ def show_all_pokemons(request):
 
 
 def show_pokemon(request, pokemon_id):
-    pokemons = Pokemon.objects.all()
-
-    for pokemon in pokemons:
-        if pokemon.id == int(pokemon_id):
-            requested_pokemon = pokemon
-            break
-    else:
+    try:
+        requested_pokemon = Pokemon.objects.get(id=pokemon_id)
+    except ObjectDoesNotExist:
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
+
+    if requested_pokemon.image:
+        img_url = requested_pokemon.image.url
+    else:
+        img_url = ''
+
+    pokemon_on_page = {
+        'pokemon_id': requested_pokemon.id,
+        "title_ru": requested_pokemon.title_ru,
+        "title_en": requested_pokemon.title_en,
+        "title_jp": requested_pokemon.title_jp,
+        "description": requested_pokemon.description,
+        "img_url": img_url,
+    }
+
+    if requested_pokemon.next_evolution:
+        pokemon_on_page['next_evolution'] = {
+            "title_ru": requested_pokemon.next_evolution.title_ru,
+            "pokemon_id": requested_pokemon.next_evolution.id,
+            "img_url": requested_pokemon.next_evolution.image.url
+            if requested_pokemon.next_evolution.image else ''
+        }
+
+    if requested_pokemon.previous_evolution:
+        pokemon_on_page['previous_evolution'] = {
+            "title_ru": requested_pokemon.previous_evolution.title_ru,
+            "pokemon_id": requested_pokemon.previous_evolution.id,
+            "img_url": requested_pokemon.previous_evolution.image.url
+            if requested_pokemon.previous_evolution.image else ''
+        }
 
     folium_map = folium.Map(location=MOSCOW_CENTER, zoom_start=12)
     for pokemon_entity in PokemonEntity.objects.filter(
@@ -91,5 +118,5 @@ def show_pokemon(request, pokemon_id):
         )
 
     return render(request, 'pokemon.html', context={
-        'map': folium_map._repr_html_(), 'pokemon': requested_pokemon
+        'map': folium_map._repr_html_(), 'pokemon': pokemon_on_page
     })
