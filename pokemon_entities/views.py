@@ -70,18 +70,13 @@ def show_pokemon(request, pokemon_id):
     except ObjectDoesNotExist:
         return HttpResponseNotFound('<h1>Такой покемон не найден</h1>')
 
-    if requested_pokemon.image:
-        img_url = requested_pokemon.image.url
-    else:
-        img_url = ''
-
     pokemon_on_page = {
         'pokemon_id': requested_pokemon.id,
         "title_ru": requested_pokemon.title_ru,
         "title_en": requested_pokemon.title_en,
         "title_jp": requested_pokemon.title_jp,
         "description": requested_pokemon.description,
-        "img_url": img_url,
+        "img_url": requested_pokemon.image.url if requested_pokemon.image else '',
     }
 
     if requested_pokemon.next_evolution:
